@@ -6,15 +6,14 @@ Created on Tue Jun 14 19:08:45 2022
 @author: jakob
 """
 
-import emcee as em
-import arviz as az
-import numpy as np
 
+import numpy as np
+import argparse
 import sys, os
 sys.path.append('../source/')
 from cosmo_jnp import cosmo, pantheon
+from run import run_sampler
 
-import jax.numpy as jnp
 
 
 
@@ -24,10 +23,9 @@ import jax.numpy as jnp
 
 data_dir = '../data/'
 p = pantheon(data_dir+'pantheon.txt', data_dir+'pantheon_covsys.txt')
-p_inv = p.inv_cov
-p_cov = jnp.linalg.inv(p_inv)
 
-panth_dict = {'x' : p.redshift1, 'y' : p.dm, 'cov':p_cov, 'inv_cov' : p_inv, 'name':'panth'}
+
+panth_dict = {'x' : p.redshift1, 'y' : p.dm, 'inv_cov' : p.inv_cov, 'name':'panth'}
 
 #defining cosmology object
 cosmology = cosmo(0.7, p.redshift1)
@@ -35,8 +33,8 @@ cosmology = cosmo(0.7, p.redshift1)
 
 #defining log_likelihood
 
-def log_likelihood(y, inv_cov, cosm, Omega_m=0.3, w_0=-1, w_1=0, a=0,):
-    distance_mod = cosm.dist_mod(Omega_m, w_0, w_1, a)
+def log_likelihood(y, inv_cov, cosm, theta_dict):
+    distance_mod = cosm.dist_mod(theta_dict)
     log_like = -0.5 * ((y - distance_mod) @ inv_cov @ (y - distance_mod))
     #log_like = - 0.5 * np.sum(((y-distance_mod)/cov.err)**2)
     return log_like
@@ -85,7 +83,7 @@ def log_probability(theta, y, inv_cov, cosm):
     lp = log_prior(**theta_dict)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + log_likelihood( y, inv_cov, cosm,**theta_dict)
+    return lp + log_likelihood( y, inv_cov, cosm,theta_dict)
 
 def log_probability_planck(theta, y, inv_cov, cosm):
     '''
@@ -110,7 +108,7 @@ def log_probability_planck(theta, y, inv_cov, cosm):
     lp = log_prior_planck(**theta_dict)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + log_likelihood( y, inv_cov, cosm,**theta_dict)
+    return lp + log_likelihood( y, inv_cov, cosm,theta_dict)
 
 def log_probability_noprior(theta, y, inv_cov, cosm):
     '''
@@ -135,7 +133,7 @@ def log_probability_noprior(theta, y, inv_cov, cosm):
     lp = log_no_prior(**theta_dict)
     if not np.isfinite(lp):
         return -np.inf
-    return lp + log_likelihood( y, inv_cov, cosm,**theta_dict)
+    return lp + log_likelihood( y, inv_cov, cosm,theta_dict)
 
 #setting initial values for emcee
 initial_lambda = np.array([0.5])
@@ -153,60 +151,44 @@ joint_dict = {'prior0': log_probability, 'prior1': log_probability_planck, 'prio
 
 
 
-#setting run_sampler method
-def run_sampler(dictionary, key, nwalkers,  dm, data_inv, cosm, num, name, prob_dict, prob_key, results_dir=''):
-    
-    initial = dictionary[key]
-    log_probability = joint_dict[prob_key]
-    
-    print(name+' started...')
 
-    ndim = len(initial)
-    pos = initial + 0.05 * np.random.randn(nwalkers, ndim) 
-    
-
-    #filename = name+"_backend.h5"
-    #backend = em.backends.HDFBackend(filename)
-    #backend.reset(nwalkers, ndim)
-    
-    sampler = em.EnsembleSampler(
-    nwalkers, ndim, log_probability, args=(dm, data_inv, cosm)#, backend=backend
-    )
-    sampler.run_mcmc(pos, num, progress=True);
-    
-    
-    #saving the data as a numpy-readable file is optional
-    #np.savetxt('data_tables/'+name+'.gz', samples)
-    
-    labels = ['Omega_m', 'w_0', 'w_1', 'a']
-    var_names = labels[slice(None, ndim)]
-    
-    idata = az.from_emcee(sampler, var_names=var_names)
-    
-    filename = name+'_'+key+'_'+prob_key
-    
-    print(filename)
-    
-    file = idata.to_netcdf(results_dir+filename+'.nc', groups='posterior')
-    
-    return idata
 
 results_dir='emcee_results/'
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
-nwalkers = 16
-num_steps = 100
+    
+# define parser arguments
+
+#define arguments passed in the command line
+parser = argparse.ArgumentParser(description='Takes number of steps and number of walkers')
+parser.add_argument('-num_steps', type=int, help='number of steps in for one walker')
+parser.add_argument('-nwalkers', type=int, help='number of walkers')
+
+
+args = parser.parse_args()
+if args.num_steps:
+    num_steps = args.num_steps
+else:
+    num_steps = 100
+    
+if args.nwalkers:
+    nwalkers = args.nwalkers 
+else:
+    nwalkers = 16
+    
+
+
 
 for i in [lcdm_dict, cpl_dict, alpha_dict]:
     for j in joint_dict.keys():
         try:
             idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-        except ValueError as err:
+        except Exception as err:
             print('Exception raised! {}'.format(err))
             
         try:
             idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-        except Exception:
-            print('Exception raised! ')
+        except Exception as err:
+            print('Exception raised! {}'.format(err))
             
 

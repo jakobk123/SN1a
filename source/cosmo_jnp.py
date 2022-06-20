@@ -40,9 +40,9 @@ class cosmo:
         d_L = (1+self.z) * jnp.trapz(1/H, x=self.z_arr, axis=0)
         return d_L
         
-    def dist_mod(self, Omega_m, w_0=-1, w_1=0, a=0):
+    def dist_mod(self, theta_dict):
         '''returns the theoretical predicted distance modulus'''
-        H_of_z  = self.H_z(Omega_m, w_0, w_1, a)
+        H_of_z  = self.H_z(**theta_dict)
         dist_L = self.d_L(H_of_z)
         dist_mod = 25 + 5 * jnp.log10(dist_L)
         return dist_mod
@@ -63,6 +63,7 @@ class union:
         self.prob = matrix[:,3]
         
         covariance = np.genfromtxt(cov, delimiter='\t', usecols=(range(len(self.redshift))))
+        self.cov
         self.inv_cov = jnp.asarray(np.linalg.inv(covariance))
         
         
