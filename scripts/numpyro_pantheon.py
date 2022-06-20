@@ -6,12 +6,14 @@ Created on Wed Jun 15 17:15:20 2022
 """
 
 
+import sys, os
 import emcee as em
 import arviz as az
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
 import matplotlib.lines as mlines
+sys.path.append('../source/')
 from cosmo_jnp import cosmo, pantheon
 
 import jax
@@ -34,7 +36,8 @@ from tqdm import tqdm
 import pickle
 
 
-p = pantheon('pantheon.txt', 'pantheon_covsys.txt')
+data_dir = '../data/'
+p = pantheon(data_dir+'pantheon.txt', data_dir+'pantheon_covsys.txt')
 p_inv = p.inv_cov
 p_cov = jnp.linalg.inv(p_inv)
 
@@ -123,7 +126,7 @@ def model_alpha_noprior(x, y, cov):
     sample("y", dist.MultivariateNormal(mu, cov), obs=y)
 
 
-def run_svi_manual(model_dict, it, x, y, cov, initial_values, init, num_samples=10000, stepsize=0.001, grad_steps=5000):
+def run_svi_manual(model_dict, it, x, y, cov, initial_values, init, num_samples=10000, stepsize=0.001, grad_steps=5000, results_dir='./'):
     """
     Handles the complete inference process. Does not rely on the SVI.run()
     method but rather does it manually through jax.jit(SVI.update())
@@ -186,7 +189,7 @@ def run_svi_manual(model_dict, it, x, y, cov, initial_values, init, num_samples=
     name_model = model_dict['name'][it]
     name_prior = model_dict['prior'][it]
     
-    filename = name_model+'_'+name_prior+'_'+init+'_'+str(stepsize)+'.pickle'
+    filename = results_dir+name_model+'_'+name_prior+'_'+init+'_'+str(stepsize)+'.pickle'
 
     init_vals = initial_values[init]
     
@@ -242,7 +245,7 @@ def run_svi_manual(model_dict, it, x, y, cov, initial_values, init, num_samples=
     with open(filename, 'wb') as handle:
         pickle.dump(res_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
         
-    print('numpyro_results/'+filename+' saved!')
+    print(filename+' saved!')
 
     return res_dict
     
@@ -271,7 +274,9 @@ prior_names = ['prior0', 'prior1',
                'prior0', 'prior1', 'prior2']
 
 dict_keys = ['model', 'name', 'prior']
-
+results_dir='./numpyro_results/'
+if not os.path.exists(results_dir):
+    os.makedirs(results_dir)
 
 model_dict = dict(zip(dict_keys, [models, model_names, prior_names]))
 
@@ -279,7 +284,7 @@ for i in range(len(models)):
     for j in ['init0', 'init1']:
         try:
             run_svi_manual(model_dict,i, x, y, cov, init_dict, j, 
-                           num_samples, stepsize, grad_steps)
+                           num_samples, stepsize, grad_steps, results_dir=results_dir)
         except Exception:
             print('Exception raised!')
 

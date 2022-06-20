@@ -10,6 +10,8 @@ import emcee as em
 import arviz as az
 import numpy as np
 
+import sys, os
+sys.path.append('../source/')
 from cosmo_jnp import cosmo, pantheon
 
 import jax.numpy as jnp
@@ -20,7 +22,8 @@ import jax.numpy as jnp
 #inv stands for the inverse covariance matrix
 
 
-p = pantheon('pantheon.txt', 'pantheon_covsys.txt')
+data_dir = '../data/'
+p = pantheon(data_dir+'pantheon.txt', data_dir+'pantheon_covsys.txt')
 p_inv = p.inv_cov
 p_cov = jnp.linalg.inv(p_inv)
 
@@ -151,7 +154,7 @@ joint_dict = {'prior0': log_probability, 'prior1': log_probability_planck, 'prio
 
 
 #setting run_sampler method
-def run_sampler(dictionary, key, nwalkers,  dm, data_inv, cosm, num, name, prob_dict, prob_key):
+def run_sampler(dictionary, key, nwalkers,  dm, data_inv, cosm, num, name, prob_dict, prob_key, results_dir=''):
     
     initial = dictionary[key]
     log_probability = joint_dict[prob_key]
@@ -184,23 +187,25 @@ def run_sampler(dictionary, key, nwalkers,  dm, data_inv, cosm, num, name, prob_
     
     print(filename)
     
-    file = idata.to_netcdf('emcee_results/'+filename+'.nc', groups='posterior')
+    file = idata.to_netcdf(results_dir+filename+'.nc', groups='posterior')
     
     return idata
 
-
-nwalkers = 32
+results_dir='emcee_results/'
+if not os.path.exists(results_dir):
+    os.makedirs(results_dir)
+nwalkers = 16
 num_steps = 100
 
 for i in [lcdm_dict, cpl_dict, alpha_dict]:
     for j in joint_dict.keys():
         try:
-            idata_0, file = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j)
+            idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
         except ValueError as err:
             print('Exception raised! {}'.format(err))
             
         try:
-            idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j)
+            idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
         except Exception:
             print('Exception raised! ')
             
