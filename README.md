@@ -15,3 +15,11 @@ pip install emcee
  ```
 pip install arviz
 ```
+
+
+### Use optax for optimization
+ Install optax by typing:
+ 
+ ```
+pip install optax
+```
