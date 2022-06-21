@@ -59,7 +59,7 @@ def run_sampler(dictionary, key, nwalkers,  dm, data_inv, cosm, num, name, prob_
 
 def run_svi_manual(model_dict, it, x, y, cov, initial_values, init, 
                    num_samples=10000, stepsize=0.001, grad_steps=5000, 
-                   intermediate_steps=2, results_dir='./'):
+                   intermediate_steps=2, results_dir='./', save=True):
     """
     Handles the complete inference process. Does not rely on the SVI.run()
     method but rather does it manually through jax.jit(SVI.update())
@@ -175,9 +175,12 @@ def run_svi_manual(model_dict, it, x, y, cov, initial_values, init,
     
     res_dict = {'samples':samples_dict, 'losses':losses, 'params':param_dict, 'quantiles':quant_dict}
     
-    with open(filename, 'wb') as handle:
-        pickle.dump(res_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        
-    print(filename+' saved!')
+    if save == True:
+        with open(filename, 'wb') as handle:
+            pickle.dump(res_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            
+        print(filename+' saved!')
+    else:
+        pass
 
     return res_dict

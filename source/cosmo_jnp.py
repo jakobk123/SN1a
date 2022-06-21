@@ -63,7 +63,7 @@ class union:
         self.prob = matrix[:,3]
         
         covariance = np.genfromtxt(cov, delimiter='\t', usecols=(range(len(self.redshift))))
-        self.cov
+        self.cov = covariance
         self.inv_cov = jnp.asarray(np.linalg.inv(covariance))
         
         
