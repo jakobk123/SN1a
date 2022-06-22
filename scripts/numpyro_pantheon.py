@@ -10,6 +10,36 @@ import sys, os
 import argparse
 
 sys.path.append('../source')
+
+
+#define arguments passed in the command line
+parser = argparse.ArgumentParser(description='Takes num_samples, grad_steps, intermediate steps and stepsize')
+parser.add_argument('-num_samples', type=int, help='number of samples drawn from the proposal distribution')
+parser.add_argument('-grad_steps', type=int, help='number of gradient steps taken')
+parser.add_argument('-intermediate_steps', type=int, help='number of intermediate steps between passed to jnp.geomspace')
+parser.add_argument('-stepsize', type=float, help='stepsize of the adam optimizer')
+
+args = parser.parse_args()
+if args.num_samples:
+    num_samples = args.num_samples
+else:
+    num_samples = 1000
+    
+if args.grad_steps:
+    grad_steps = args.grad_steps 
+else:
+    grad_steps = 100
+    
+if args.intermediate_steps:
+    intermediate_steps = args.intermediate_steps 
+else:
+    intermediate_steps = 2
+    
+if args.stepsize:
+    stepsize = args.stepsize
+else:
+    stepsize = 0.001
+
 from cosmo_jnp import cosmo, pantheon
 from run import run_svi_manual
 
@@ -123,46 +153,18 @@ def model_alpha_noprior(x, y, cov):
 init_dict = {'init_0':{'Omega_m':0.5, 'w_0':0., 'w_1':1., 'a':1.}, 'init_1':{'Omega_m':0.3, 'w_0':-1., 'w_1':0., 'a':0.}}
 
 
-#define arguments passed in the command line
-parser = argparse.ArgumentParser(description='Takes num_samples, grad_steps, intermediate steps and stepsize')
-parser.add_argument('-num_samples', type=int, help='number of samples drawn from the proposal distribution')
-parser.add_argument('-grad_steps', type=int, help='number of gradient steps taken')
-parser.add_argument('-intermediate_steps', type=int, help='number of intermediate steps between passed to jnp.geomspace')
-parser.add_argument('-stepsize', type=float, help='stepsize of the adam optimizer')
-
-args = parser.parse_args()
-if args.num_samples:
-    num_samples = args.num_samples
-else:
-    num_samples = 1000
-    
-if args.grad_steps:
-    grad_steps = args.grad_steps 
-else:
-    grad_steps = 100
-    
-if args.intermediate_steps:
-    intermediate_steps = args.intermediate_steps 
-else:
-    intermediate_steps = 2
-    
-if args.stepsize:
-    stepsize = args.stepsize
-else:
-    stepsize = 0.001
 
 
 models = [model_lcdm, model_lcdm_planck, 
-          model_cpl, model_cpl_planck, model_cpl_noprior,
-          model_alpha, model_alpha_planck, model_alpha_noprior]
+          model_cpl, model_cpl_planck, model_cpl_noprior]#model_alpha, model_alpha_planck, model_alpha_noprior]
 
 model_names = ['lcdm', 'lcdm',
-               'cpl', 'cpl', 'cpl',
-               'alpha', 'alpha', 'alpha']
+               'cpl', 'cpl', 'cpl']
+               #'alpha', 'alpha', 'alpha']
 
 prior_names = ['prior0', 'prior1',
-               'prior0', 'prior1', 'prior2',
                'prior0', 'prior1', 'prior2']
+               #'prior0', 'prior1', 'prior2']
 
 dict_keys = ['model', 'name', 'prior']
 results_dir='./numpyro_results/'

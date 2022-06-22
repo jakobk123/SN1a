@@ -11,6 +11,28 @@ import numpy as np
 import argparse
 import sys, os
 sys.path.append('../source/')
+
+
+
+# define parser arguments
+
+#define arguments passed in the command line
+parser = argparse.ArgumentParser(description='Takes number of steps and number of walkers')
+parser.add_argument('-num_steps', type=int, help='number of steps in for one walker')
+parser.add_argument('-nwalkers', type=int, help='number of walkers')
+
+args = parser.parse_args()
+if args.num_steps:
+    num_steps = args.num_steps
+else:
+    num_steps = 100
+    
+if args.nwalkers:
+    nwalkers = args.nwalkers 
+else:
+    nwalkers = 16
+
+
 from cosmo_jnp import cosmo, pantheon
 from run import run_sampler
 
@@ -157,29 +179,13 @@ results_dir='emcee_results/'
 if not os.path.exists(results_dir):
     os.makedirs(results_dir)
     
-# define parser arguments
-
-#define arguments passed in the command line
-parser = argparse.ArgumentParser(description='Takes number of steps and number of walkers')
-parser.add_argument('-num_steps', type=int, help='number of steps in for one walker')
-parser.add_argument('-nwalkers', type=int, help='number of walkers')
 
 
-args = parser.parse_args()
-if args.num_steps:
-    num_steps = args.num_steps
-else:
-    num_steps = 100
-    
-if args.nwalkers:
-    nwalkers = args.nwalkers 
-else:
-    nwalkers = 16
     
 
 
 
-for i in [lcdm_dict, cpl_dict, alpha_dict]:
+for i in [lcdm_dict, cpl_dict]:
     for j in joint_dict.keys():
         try:
             idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
