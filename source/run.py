@@ -156,7 +156,7 @@ def run_svi_manual(model_dict, it, x, y, cov, initial_values, init,
     print(filename+' startet...')
     
     for i in tqdm(range(grad_steps)):
-        if i in steps_diff:
+        if i in steps:
             par = svi.get_params(state)
             param_dict['param_{}'.format(index)] = par
             quant = guide.quantiles(par, [0.16, 0.5, 0.84])
