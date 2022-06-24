@@ -80,6 +80,11 @@ def log_no_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
         return 0
     return -np.inf
 
+def log_large_planck(Omega_m=0.3, w_0=-1, w_1=0, a=0):
+    '''returns the log of the propability densities up to a constant'''
+    l_prior = - ((Omega_m - 0.3166)**2/(3*0.0084)**2 + (w_0+0.957)**2/(3*0.08)**2 + (w_1 + 0.32)**2/(3*0.29)**2 + a**2/0.5**2) 
+    return l_prior
+
 #defining log_probability
 
 def log_probability(theta, y, inv_cov, cosm):
@@ -157,6 +162,31 @@ def log_probability_noprior(theta, y, inv_cov, cosm):
         return -np.inf
     return lp + log_likelihood( y, inv_cov, cosm,theta_dict)
 
+def log_probability_large_planck(theta, y, inv_cov, cosm):
+    '''
+    performs the multiplication prior*likelihood
+
+    Parameters
+    ----------
+    theta : list of parameter values. Float
+    y : distance modulus data
+    inv_cov : inverse covariance matrix
+    cosm : cosmology type cosmo_class
+
+    Returns
+    -------
+    Log of joint probability
+    Device array
+
+    '''
+    
+    keys = ['Omega_m', 'w_0', 'w_1', 'a']
+    theta_dict = dict(zip(keys, theta))
+    lp = log_large_planck(**theta_dict)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + log_likelihood( y, inv_cov, cosm,theta_dict)
+
 #setting initial values for emcee
 initial_lambda = np.array([0.5])
 initial_lambda2 = np.array([0.3])
@@ -169,7 +199,10 @@ lcdm_dict = {'init0' : initial_lambda, 'init1': initial_lambda2, 'name' : 'lcdm'
 cpl_dict = {'init0' : initial_cpl, 'init1': initial_cpl2, 'name' : 'cpl'}
 alpha_dict = {'init0' : initial_alpha, 'init1': initial_alpha2, 'name' : 'alpha'}
 
-joint_dict = {'prior0': log_probability, 'prior1': log_probability_planck, 'prior2': log_probability_noprior}
+joint_dict = {'prior0': log_probability, 
+              'prior1': log_probability_planck, 
+              'prior2': log_probability_noprior,
+              'prior3': log_probability_large_planck}
 
 
 
@@ -185,7 +218,31 @@ if not os.path.exists(results_dir):
 
 
 
-for i in [lcdm_dict, cpl_dict]:
+# =============================================================================
+# for i in [lcdm_dict, cpl_dict]:
+#     for j in joint_dict.keys():
+#         try:
+#             idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
+#         except Exception as err:
+#             print('Exception raised! {}'.format(err))
+#             
+#         try:
+#             idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
+#         except Exception as err:
+#             print('Exception raised! {}'.format(err))
+# =============================================================================
+        
+
+# =============================================================================
+# try:
+#     idata_0 = run_sampler(lcdm_dict, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, 'lcdm', joint_dict, 'prior3', results_dir=results_dir)
+# except Exception as err:
+#     print('Exception raised! {}'.format(err))
+#     
+# =============================================================================
+#run with 75000:    
+    
+for i in [cpl_dict]:
     for j in joint_dict.keys():
         try:
             idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
@@ -198,3 +255,16 @@ for i in [lcdm_dict, cpl_dict]:
             print('Exception raised! {}'.format(err))
             
 
+
+for i in [alpha_dict]:
+    for j in joint_dict.keys():
+        try:
+            idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
+        except Exception as err:
+            print('Exception raised! {}'.format(err))
+            
+        try:
+            idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
+        except Exception as err:
+            print('Exception raised! {}'.format(err))
+            
