@@ -71,8 +71,9 @@ def log_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
 
 def log_prior_planck(Omega_m, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
-    l_prior = - ((Omega_m - 0.3166)**2/0.0084**2 + (w_0+0.957)**2/0.08**2 + (w_1 + 0.32)**2/0.29**2 + a**2/0.5**2) 
-    return l_prior
+    if 0.0 < Omega_m < 1:
+        return - ((Omega_m - 0.3166)**2/0.0084**2 + (w_0+0.957)**2/0.08**2 + (w_1 + 0.32)**2/0.29**2 + a**2/0.5**2) 
+    return -np.inf
 
 def log_no_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
@@ -82,8 +83,9 @@ def log_no_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
 
 def log_large_planck(Omega_m=0.3, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
-    l_prior = - ((Omega_m - 0.3166)**2/(3*0.0084)**2 + (w_0+0.957)**2/(3*0.08)**2 + (w_1 + 0.32)**2/(3*0.29)**2 + a**2/0.5**2) 
-    return l_prior
+    if 0.0 < Omega_m < 1:
+        return - ((Omega_m - 0.3166)**2/(3*0.0084)**2 + (w_0+0.957)**2/(3*0.08)**2 + (w_1 + 0.32)**2/(3*0.29)**2 + a**2/0.5**2) 
+    return -np.inf
 
 #defining log_probability
 
