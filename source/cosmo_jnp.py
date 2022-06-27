@@ -8,6 +8,7 @@ Created on Fri May 20 20:34:57 2022
 import jax.numpy as jnp
 import numpy as np
 from scipy.constants import c
+import jax_cosmo as jc
 
 class cosmo:
     '''defines a cosmology. The redshifts are handed over
@@ -19,9 +20,9 @@ class cosmo:
         z: array of redshifts.'''
         
         self.H_0 = 100 * h * 1000 / c
-        self.z_sample = 500
-        self.z_arr = jnp.linspace(0.0001, z, self.z_sample)
+        self.z_arr = jnp.linspace(0., z, 500)
         self.z = z
+
     	
     def H_z(self, Omega_m, w_0=-1, w_1=0, a=0):
         '''Omega_m, w_0, w_1, a: cosmological parameters, type float
@@ -48,6 +49,24 @@ class cosmo:
         return dist_mod
 
     
+class cosmo_jc:
+    def __init__(self, h, z):
+        self.a = jc.utils.z2a(z)
+        self.h = h
+        
+    def dist_mod(self, theta_dict):
+        '''returns the theoretical predicted distance modulus'''
+        
+        Omega_b = 0.05
+        Omega_c = theta_dict.get('Omega_m', 0.3) - Omega_b
+        w0 = theta_dict.get('w_0', -1)
+        w1 = theta_dict.get('w_1', 0)
+        cosmology = jc.Cosmology(h=self.h, Omega_c = Omega_c, Omega_b=Omega_b, w0=w0, wa=w1, Omega_k=0, n_s=0.96, sigma8=0.83)
+        dist_L = (jc.background.angular_diameter_distance(cosmology, self.a)/self.a**2)/self.h
+        dist_mod = 25 + 5 * jnp.log10(dist_L)
+        return dist_mod
+    
+
 class union:
     '''data class for the union 2.1 data. The columns 2-5 are used
     which contain redshift, distance modulus and distance modulus error
