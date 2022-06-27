@@ -84,8 +84,13 @@ def log_no_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
 def log_large_planck(Omega_m=0.3, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
     if 0.0 < Omega_m < 1:
+<<<<<<< HEAD
         return - ((Omega_m - 0.3166)**2/(3*0.0084)**2 + (w_0+0.957)**2/(3*0.08)**2 + (w_1 + 0.32)**2/(3*0.29)**2 + a**2/0.5**2) 
     return -np.inf
+=======
+    l_prior = - ((Omega_m - 0.3166)**2/(3*0.0084)**2 + (w_0+0.957)**2/(3*0.08)**2 + (w_1 + 0.32)**2/(3*0.29)**2 + a**2/0.5**2) 
+    return l_prior
+>>>>>>> ca06b84... Update emcee_pantheon.py
 
 #defining log_probability
 
