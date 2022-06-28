@@ -155,15 +155,15 @@ init_dict = {'init_0':{'Omega_m':0.5, 'w_0':0., 'w_1':1., 'a':1.}, 'init_1':{'Om
 
 
 
-models = [model_lcdm, model_lcdm_planck, 
-          model_cpl, model_cpl_planck, model_cpl_noprior]#model_alpha, model_alpha_planck, model_alpha_noprior]
+#models = [model_lcdm, model_lcdm_planck, 
+models=[model_cpl, model_cpl_planck]#, model_cpl_noprior]#model_alpha, model_alpha_planck, model_alpha_noprior]
 
-model_names = ['lcdm', 'lcdm',
-               'cpl', 'cpl', 'cpl']
+#model_names = #['lcdm', 'lcdm',
+model_names=['cpl', 'cpl']#, 'cpl']
                #'alpha', 'alpha', 'alpha']
 
-prior_names = ['prior0', 'prior1',
-               'prior0', 'prior1', 'prior2']
+prior_names = ['prior0', 'prior1']
+               #'prior0', 'prior1', 'prior2']
                #'prior0', 'prior1', 'prior2']
 
 dict_keys = ['model', 'name', 'prior']

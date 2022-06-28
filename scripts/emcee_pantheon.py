@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Jun 27 17:37:07 2022
+
+@author: jakob
+"""
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -66,14 +73,16 @@ def log_likelihood(y, inv_cov, cosm, theta_dict):
 def log_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
     if 0.0 < Omega_m < 1:
-        return -((w_0+1)**2/5**2 + (w_1)**2/5**2 + a**2/5**2) 
+        return -0.5*((w_0+1)**2/5**2 + (w_1)**2/5**2 + a**2/5**2) 
     return -np.inf
 
 def log_prior_planck(Omega_m, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
-    if 0.0 < Omega_m < 1:
-        return - ((Omega_m - 0.3166)**2/0.0084**2 + (w_0+0.957)**2/0.08**2 + (w_1 + 0.32)**2/0.29**2 + a**2/0.5**2) 
-    return -np.inf
+    if 0.0 < (Omega_m) < 1:
+        l_prior = - 0.5*((Omega_m - 0.3166)**2/0.0084**2 + (w_0+0.957)**2/0.08**2 + (w_1 + 0.32)**2/0.29**2 + a**2/0.5**2) 
+    else:
+        l_prior = -np.inf
+    return l_prior
 
 def log_no_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
@@ -83,9 +92,8 @@ def log_no_prior(Omega_m=0.3, w_0=-1, w_1=0, a=0):
 
 def log_large_planck(Omega_m=0.3, w_0=-1, w_1=0, a=0):
     '''returns the log of the propability densities up to a constant'''
-    if 0.0 < Omega_m < 1:
-        return - ((Omega_m - 0.3166)**2/(3*0.0084)**2 + (w_0+0.957)**2/(3*0.08)**2 + (w_1 + 0.32)**2/(3*0.29)**2 + a**2/0.5**2) 
-    return -np.inf
+    l_prior = - 0.5*((Omega_m - 0.3166)**2/(3*0.0084)**2 + (w_0+0.957)**2/(3*0.08)**2 + (w_1 + 0.32)**2/(3*0.29)**2 + a**2/0.5**2) 
+    return l_prior
 
 #defining log_probability
 
@@ -203,7 +211,6 @@ alpha_dict = {'init0' : initial_alpha, 'init1': initial_alpha2, 'name' : 'alpha'
 
 joint_dict = {'prior0': log_probability, 
               'prior1': log_probability_planck, 
-              'prior2': log_probability_noprior,
               'prior3': log_probability_large_planck}
 
 
@@ -220,53 +227,23 @@ if not os.path.exists(results_dir):
 
 
 
-# =============================================================================
-# for i in [lcdm_dict, cpl_dict]:
-#     for j in joint_dict.keys():
-#         try:
-#             idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-#         except Exception as err:
-#             print('Exception raised! {}'.format(err))
-#             
-#         try:
-#             idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-#         except Exception as err:
-#             print('Exception raised! {}'.format(err))
-# =============================================================================
+for i in [lcdm_dict]:
+    for j in joint_dict.keys():
+        try:
+            idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
+        except Exception as err:
+            print('Exception raised! {}'.format(err))
+            
+        try:
+            idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
+        except Exception as err:
+            print('Exception raised! {}'.format(err))
         
 
 # =============================================================================
 # try:
-#     idata_0 = run_sampler(lcdm_dict, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, 'lcdm', joint_dict, 'prior3', results_dir=results_dir)
+#     idata_0 = run_sampler(lcdm_dict, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, 'lcdm', joint_dict, 'prior1', results_dir=results_dir)
 # except Exception as err:
 #     print('Exception raised! {}'.format(err))
-#     
 # =============================================================================
-#run with 75000:    
     
-for i in [cpl_dict]:
-    for j in joint_dict.keys():
-        try:
-            idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-        except Exception as err:
-            print('Exception raised! {}'.format(err))
-            
-        try:
-            idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-        except Exception as err:
-            print('Exception raised! {}'.format(err))
-            
-
-
-for i in [alpha_dict]:
-    for j in joint_dict.keys():
-        try:
-            idata_0 = run_sampler(i, 'init0', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-        except Exception as err:
-            print('Exception raised! {}'.format(err))
-            
-        try:
-            idata_1 = run_sampler(i, 'init1', nwalkers, panth_dict['y'], panth_dict['inv_cov'], cosmology, num_steps, i['name'], joint_dict, j, results_dir=results_dir)
-        except Exception as err:
-            print('Exception raised! {}'.format(err))
-            
