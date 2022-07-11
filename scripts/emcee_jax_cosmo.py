@@ -59,6 +59,8 @@ true_param = {'h':0.7,
     'w0':-1.0,
     'wa':0.0}
 
+from scipy.constants import c
+
 #define distance modulus function
 def distance_modulus(theta, z):
     a = jc.utils.z2a(z)
@@ -70,9 +72,17 @@ def distance_modulus(theta, z):
     w0 = theta.get('w0', -1.)
     wa = theta.get('wa', 0.)
     
-    cosmology = jc.Cosmology(h=h, Omega_c=Omega_c, Omega_b=Omega_b, w0=w0, wa=wa, Omega_k=Omega_k, n_s=0.96, sigma8=0.83)
-    dist_L = (jc.background.angular_diameter_distance(cosmology, a)/a**2.0)/h
-    dist_mod = 25. + 5. * jnp.log10(dist_L)
+    #cosmology = jc.Cosmology(h=h, Omega_c=Omega_c, Omega_b=Omega_b, w0=w0, wa=wa, Omega_k=Omega_k, n_s=0.96, sigma8=0.83)
+    
+    H_0 = 100 * h * 1000 / c
+    z_arr = np.linspace(0., z, 500)
+    H_z = (H_0 * np.reciprocal(np.exp(np.log(1+z_arr)))) * np.sqrt(Omega_m * (1+z_arr) ** 3 + 
+                                                   (1 - Omega_m)*(1+z_arr)**(3*(1+w0+wa))*np.exp(-3*wa/(1+z_arr)))
+    d_L = (1+z) * np.trapz(1/H_z, x=z_arr, axis=0)
+    
+    #dist_L = (jc.background.angular_diameter_distance(cosmology, a)/a**2.0)/h
+    #dist_mod = 25. + 5. * jnp.log10(dist_L)
+    dist_mod = 25 + 5 * np.log10(d_L)
     return dist_mod
 
 
